@@ -5,6 +5,14 @@
 #define PABOOST 1
 #define CR4SLSH 5
 
+// FEC-related constants
+static const int MSGSIZ_SHORT = 50;
+static const int MSGSIZ_MEDIUM = 100;
+static const int MSGSIZ_LONG = 220;
+static const int REDUNDANCY_SHORT = 10;
+static const int REDUNDANCY_MEDIUM = 14;
+static const int REDUNDANCY_LONG = 20;
+
 #ifndef __AVR__
 #include <SPI.h>
 #endif
@@ -173,15 +181,6 @@ LoRaL2Packet::~LoRaL2Packet()
 {
 	free(packet);
 }
-
-// FEC-related code
-
-static const int MSGSIZ_SHORT = 50;
-static const int MSGSIZ_MEDIUM = 100;
-static const int MSGSIZ_LONG = 200;
-static const int REDUNDANCY_SHORT = 10;
-static const int REDUNDANCY_MEDIUM = 14;
-static const int REDUNDANCY_LONG = 20;
 
 RS::ReedSolomon<MSGSIZ_SHORT, REDUNDANCY_SHORT> rsf_short;
 RS::ReedSolomon<MSGSIZ_MEDIUM, REDUNDANCY_MEDIUM> rsf_medium;
