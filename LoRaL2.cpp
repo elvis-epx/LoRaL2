@@ -8,7 +8,7 @@
 // FEC-related constants
 static const int MSGSIZ_SHORT = 50;
 static const int MSGSIZ_MEDIUM = 100;
-static const int MSGSIZ_LONG = 220;
+static const int MSGSIZ_LONG = 200;
 static const int REDUNDANCY_SHORT = 10;
 static const int REDUNDANCY_MEDIUM = 14;
 static const int REDUNDANCY_LONG = 20;
