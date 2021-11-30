@@ -117,8 +117,7 @@ void LoraL2::on_recv(int len)
 		buffer[i] = LoRa.read();
 	}
 
-	recv_cb(buffer, len, rssi, 0);
-	free(buffer);
+	recv_cb(new LoRaL2Packet(buffer, len, rssi, 0));
 }
 
 bool LoraL2::send(const uint8_t *packet, int len)
@@ -146,4 +145,16 @@ static void on_recv_trampoline(int len)
 static void on_sent_trampoline()
 {
 	observer->on_sent();
+}
+
+LoRaL2Packet::LoRaL2Packet(uint8_t *packet, int len, int rssi, int err)
+{
+	this->packet = (err ? 0 : packet);
+	this->len = len;
+	this->rssi = rssi;
+	this->err = err;
+}
+	
+LoRaL2Packet::~LoRaL2Packet() {
+	free(packet);
 }

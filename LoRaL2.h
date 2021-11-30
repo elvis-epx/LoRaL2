@@ -1,10 +1,27 @@
 #ifndef __LORAL2_H
 #define __LORAL2_H
 
-typedef void (*recv_callback)(const uint8_t *packet, int len, int rssi, int err);
+class LoRaL2Packet {
+public:
+	LoRaL2Packet(const LoRaL2Packet&) = delete;
+	void operator=(const LoRaL2Packet&) = delete;
+	LoRaL2Packet() = delete;
+
+	LoRaL2Packet(uint8_t *packet, int len, int rssi, int err);
+	~LoRaL2Packet();
+	
+	uint8_t *packet;
+	int len;
+	int rssi;
+	int err;
+};
+
+typedef void (*recv_callback)(LoRaL2Packet*);
 
 class LoraL2 {
 public:
+	LoraL2(const LoraL2&) = delete;
+	void operator=(const LoraL2&) = delete;
 	LoraL2(long int band, int spread, int bandwidth,
 		const char *key, int key_len, recv_callback recv_cb);
 	bool send(const uint8_t *packet, int len);

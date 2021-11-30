@@ -7,6 +7,10 @@ LoraL2 *l2;
 #define SPREAD  7
 #define BWIDTH  125000
 
+#define MY_NAME "AA "
+
+void packet_received(LoRaL2Packet *pkt);
+
 void setup()
 {
 	Serial.begin(115200);
@@ -21,34 +25,67 @@ void setup()
 	oled_init();
 }
 
+static LoRaL2Packet *pending_recv = 0;
+long int next_send = millis() + 5000 + random(1, 15000);
+
 void loop()
-{
-	delay(5000 + random(1, 5000));
-	String msg = "Uptime " + String(millis());
+{	
+	handle_received_packet();
+	send_packet();
+}
+
+void send_packet() {
+	if (millis() < next_send) {
+		return;
+	}
+
+	String msg = MY_NAME + String(millis());
 	Serial.print("Sending: ");
 	Serial.println(msg);
 	if (!l2->send((const uint8_t*) msg.c_str(), msg.length())) {
-		Serial.println("Sending");
+		Serial.println("Send error");
+		oled_show("Send error");
+	} else {
+		String msg2 = "Sent " + String(millis());
+		oled_show(msg2.c_str());
 	}
-	String msg2 = "Sent " + String(millis());
-	oled_show(msg2.c_str());
+	
+	next_send = millis() + 5000 + random(1, 15000);
 }
 
-void packet_received(const uint8_t *packet, int len, int rssi, int err)
+void handle_received_packet()
 {
-	if (err) {
+	if (! pending_recv) {
+		return;
+	}
+
+	if (pending_recv->err) {
 		Serial.print("Recv with err ");
-		Serial.println(err);
+		Serial.println(pending_recv->err);
 	} else {
-		Serial.print("Recv: ");
-		Serial.print((const char *) packet);
+		Serial.print("Recv ");
+		Serial.print((const char *) pending_recv->packet);
 		Serial.print("  Len ");
-		Serial.print(len);
-		String msg = "Recv " + String(millis());
+		Serial.print(pending_recv->len);
+		String msg = "Recv ";
+		msg += (const char*) pending_recv->packet;
 		oled_show(msg.c_str());
 	}
 	Serial.print(" RSSI ");
-	Serial.println(rssi);
+	Serial.println(pending_recv->rssi);
+
+	delete pending_recv;
+	pending_recv = 0;
+}
+
+void packet_received(LoRaL2Packet *pkt)
+{
+	// gets the ownership of pkt and its internal buffer
+	// do as little as possible here
+	if (pending_recv) {
+		delete pending_recv;
+	}
+	pending_recv = pkt;
 }
 
 SSD1306 display(0x3c, 4, 15);
@@ -68,13 +105,9 @@ void oled_init()
         display.setTextAlignment(TEXT_ALIGN_LEFT);
 }
 
-void oled_show(const char* msg) {}
-
-/*
 void oled_show(const char* msg)
 {
         display.clear();
         display.drawString(0, 0, msg);
         display.display();
 }
-*/
