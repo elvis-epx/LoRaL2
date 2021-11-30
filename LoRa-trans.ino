@@ -20,7 +20,7 @@ void setup()
 	if (l2->ok()) {
 		Serial.println("Started");
 	} else {
-    // may happen in case some LoRa parameter is wrong
+		// may happen in case some LoRa parameter is wrong
 		Serial.println("NOT started");
 	}
 	oled_init();
@@ -35,7 +35,8 @@ void loop()
 	send_packet();
 }
 
-void send_packet() {
+void send_packet()
+{
 	if (millis() < next_send) {
 		return;
 	}
@@ -96,22 +97,22 @@ SSD1306 display(0x3c, 4, 15);
 
 void oled_init()
 {
-        pinMode(16, OUTPUT);
-        pinMode(25, OUTPUT);
+	pinMode(16, OUTPUT);
+	pinMode(25, OUTPUT);
 
-        digitalWrite(16, LOW); // reset
-        delay(50);
-        digitalWrite(16, HIGH); // keep high while operating display
+	digitalWrite(16, LOW); // reset
+	delay(50);
+	digitalWrite(16, HIGH); // keep high while operating display
 
-        display.init();
-        display.flipScreenVertically();
-        display.setFont(ArialMT_Plain_10);
-        display.setTextAlignment(TEXT_ALIGN_LEFT);
+	display.init();
+	display.flipScreenVertically();
+	display.setFont(ArialMT_Plain_10);
+	display.setTextAlignment(TEXT_ALIGN_LEFT);
 }
 
 void oled_show(const char* msg)
 {
-        display.clear();
-        display.drawString(0, 0, msg);
-        display.display();
+	display.clear();
+	display.drawString(0, 0, msg);
+	display.display();
 }

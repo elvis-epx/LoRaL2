@@ -149,11 +149,13 @@ bool LoRaL2::send(const uint8_t *packet, int len)
 	return true;
 }
 
+// ugly
 static void on_recv_trampoline(int len)
 {
 	observer->on_recv(len);
 }
 
+// ugly
 static void on_sent_trampoline()
 {
 	observer->on_sent();
@@ -167,7 +169,8 @@ LoRaL2Packet::LoRaL2Packet(uint8_t *packet, int len, int rssi, int err)
 	this->err = err;
 }
 	
-LoRaL2Packet::~LoRaL2Packet() {
+LoRaL2Packet::~LoRaL2Packet()
+{
 	free(packet);
 }
 
@@ -188,37 +191,37 @@ uint8_t *LoRaL2::append_fec(const uint8_t* packet, int len, int& new_len)
 {
 	new_len = len;
 
-	uint8_t* rs_decoded      = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));
+	uint8_t* rs_unencoded    = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));
 	uint8_t* rs_encoded      = (uint8_t*) calloc(MSGSIZ_LONG + REDUNDANCY_LONG, sizeof(char));
 	uint8_t* packet_with_fec = (uint8_t*) calloc(len         + REDUNDANCY_LONG, sizeof(char));
 
-	memcpy(rs_decoded,      packet, len);
+	memcpy(rs_unencoded,    packet, len);
 	memcpy(packet_with_fec, packet, len);
 
 	if (len <= MSGSIZ_SHORT) {
-		rsf_short.Encode(rs_decoded, rs_encoded);
+		rsf_short.Encode(rs_unencoded, rs_encoded);
 		new_len += REDUNDANCY_SHORT;
 		memcpy(packet_with_fec + len, rs_encoded + MSGSIZ_SHORT, REDUNDANCY_SHORT);
 	} else if (len <= MSGSIZ_MEDIUM) {
-		rsf_medium.Encode(rs_decoded, rs_encoded);
+		rsf_medium.Encode(rs_unencoded, rs_encoded);
 		new_len += REDUNDANCY_MEDIUM;
 		memcpy(packet_with_fec + len, rs_encoded + MSGSIZ_MEDIUM, REDUNDANCY_MEDIUM);
 	} else {
-		rsf_long.Encode(rs_decoded, rs_encoded);
+		rsf_long.Encode(rs_unencoded, rs_encoded);
 		new_len += REDUNDANCY_LONG;
 		memcpy(packet_with_fec + len, rs_encoded + MSGSIZ_LONG, REDUNDANCY_LONG);
 	}
 
 	free(rs_encoded);
-	free(rs_decoded);
+	free(rs_unencoded);
 
 	return packet_with_fec;
 }
 
 uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_len, int& err)
 {
-	uint8_t* rs_decoded = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));
 	uint8_t* rs_encoded = (uint8_t*) calloc(MSGSIZ_LONG + REDUNDANCY_LONG, sizeof(char));
+	uint8_t* rs_decoded = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));
 	uint8_t* packet     = (uint8_t*) calloc(len,                           sizeof(char));
 
 	err = 0;
@@ -226,8 +229,8 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 
 	if (len <= REDUNDANCY_SHORT || len > (MSGSIZ_LONG + REDUNDANCY_LONG)) {
 		err = 999;
-		free(rs_decoded);
 		free(rs_encoded);
+		free(rs_decoded);
 		free(packet);
 		return 0;
 	}
@@ -238,8 +241,8 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 		memcpy(rs_encoded + MSGSIZ_SHORT, packet_with_fec + net_len, REDUNDANCY_SHORT);
 		if (rsf_short.Decode(rs_encoded, rs_decoded)) {
 			err = 998;
-			free(rs_decoded);
 			free(rs_encoded);
+			free(rs_decoded);
 			free(packet);
 			return 0;
 		}
@@ -250,8 +253,8 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 		memcpy(rs_encoded + MSGSIZ_MEDIUM, packet_with_fec + net_len, REDUNDANCY_MEDIUM);
 		if (rsf_medium.Decode(rs_encoded, rs_decoded)) {
 			err = 997;
-			free(rs_decoded);
 			free(rs_encoded);
+			free(rs_decoded);
 			free(packet);
 			return 0;
 		}
@@ -262,8 +265,8 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 		memcpy(rs_encoded + MSGSIZ_LONG, packet_with_fec + net_len, REDUNDANCY_LONG);
 		if (rsf_long.Decode(rs_encoded, rs_decoded)) {
 			err = 996;
-			free(rs_decoded);
 			free(rs_encoded);
+			free(rs_decoded);
 			free(packet);
 			return 0;
 		}
