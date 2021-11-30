@@ -1,7 +1,7 @@
 #include "SSD1306.h"
-#include "LoraL2.h"
+#include "LoRaL2.h"
 
-LoraL2 *l2;
+LoRaL2 *l2;
 
 #define BAND    916750000
 #define SPREAD  7
@@ -16,7 +16,7 @@ void setup()
 	Serial.begin(115200);
 	Serial.println("Starting");
 	const char *encryption_key = 0;
-	l2 = new LoraL2(BAND, SPREAD, BWIDTH, 0, 0, packet_received);
+	l2 = new LoRaL2(BAND, SPREAD, BWIDTH, 0, 0, packet_received);
 	if (l2->ok()) {
 		Serial.println("Started");
 	} else {

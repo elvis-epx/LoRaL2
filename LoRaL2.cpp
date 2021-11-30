@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "RS-FEC.h"
 
 #define POWER   20
 #define PABOOST 1
@@ -33,13 +34,13 @@
 #define STATUS_RECEIVING 1
 #define STATUS_TRANSMITTING 2
 
-#include "LoraL2.h"
+#include "LoRaL2.h"
 
-static LoraL2* observer;
+static LoRaL2* observer;
 static void on_recv_trampoline(int len);
 static void on_sent_trampoline();
 
-LoraL2::LoraL2(long int band, int spread, int bandwidth,
+LoRaL2::LoRaL2(long int band, int spread, int bandwidth,
 		const char *key, int key_len, recv_callback recv_cb)
 {
 	observer = this;
@@ -48,7 +49,7 @@ LoraL2::LoraL2(long int band, int spread, int bandwidth,
 	this->spread = spread;
 	this->bandwidth = bandwidth;
 	if (key) {
-		this->key = (char*) ::malloc(key_len);
+		this->key = (char*) malloc(key_len);
 		::memcpy(this->key, key, key_len);
 	} else {
 		this->key = 0;
@@ -79,12 +80,12 @@ LoraL2::LoraL2(long int band, int spread, int bandwidth,
 	_ok = true;
 }
 
-bool LoraL2::ok() const
+bool LoRaL2::ok() const
 {
 	return _ok;
 }
 
-uint32_t LoraL2::speed_bps() const
+uint32_t LoRaL2::speed_bps() const
 {
 	uint32_t bps = bandwidth;
 	bps *= spread;
@@ -94,7 +95,7 @@ uint32_t LoraL2::speed_bps() const
 	return bps;
 }
 
-void LoraL2::resume_rx()
+void LoRaL2::resume_rx()
 {
 	if (status != STATUS_RECEIVING) {
 		status = STATUS_RECEIVING;
@@ -102,25 +103,30 @@ void LoraL2::resume_rx()
 	}
 }
 
-void LoraL2::on_sent()
+void LoRaL2::on_sent()
 {
 	status = STATUS_IDLE;
 	resume_rx();
 }
 
-void LoraL2::on_recv(int len)
+void LoRaL2::on_recv(int len)
 {
-	uint8_t *buffer = (uint8_t*) calloc(len + 1, sizeof(char));
+	uint8_t *buffer = (uint8_t*) calloc(len, sizeof(char));
 
 	int rssi = LoRa.packetRssi();
 	for (size_t i = 0; i < len; i++) {
 		buffer[i] = LoRa.read();
 	}
 
-	recv_cb(new LoRaL2Packet(buffer, len, rssi, 0));
+	int packet_len = 0;
+	int err = 0;
+	uint8_t *packet = decode_fec(buffer, len, packet_len, err);
+	free(buffer);
+
+	recv_cb(new LoRaL2Packet(packet, packet_len, rssi, err));
 }
 
-bool LoraL2::send(const uint8_t *packet, int len)
+bool LoRaL2::send(const uint8_t *packet, int len)
 {
 	if (status == STATUS_TRANSMITTING) {
 		return false;
@@ -131,14 +137,20 @@ bool LoraL2::send(const uint8_t *packet, int len)
 		return false;
 	}
 
+	int tot_len;
+	uint8_t* fec_packet = append_fec(packet, len, tot_len);
+
 	status = STATUS_TRANSMITTING;
-	LoRa.write(packet, len);
+	LoRa.write(fec_packet, tot_len);
 	LoRa.endPacket(true);
+
+	free(fec_packet);
+
 	return true;
 }
 
 static void on_recv_trampoline(int len)
-{;
+{
 	observer->on_recv(len);
 }
 
@@ -157,4 +169,106 @@ LoRaL2Packet::LoRaL2Packet(uint8_t *packet, int len, int rssi, int err)
 	
 LoRaL2Packet::~LoRaL2Packet() {
 	free(packet);
+}
+
+// FEC-related code
+
+static const int MSGSIZ_SHORT = 50;
+static const int MSGSIZ_MEDIUM = 100;
+static const int MSGSIZ_LONG = 200;
+static const int REDUNDANCY_SHORT = 10;
+static const int REDUNDANCY_MEDIUM = 14;
+static const int REDUNDANCY_LONG = 20;
+
+RS::ReedSolomon<MSGSIZ_SHORT, REDUNDANCY_SHORT> rsf_short;
+RS::ReedSolomon<MSGSIZ_MEDIUM, REDUNDANCY_MEDIUM> rsf_medium;
+RS::ReedSolomon<MSGSIZ_LONG, REDUNDANCY_LONG> rsf_long;
+
+uint8_t *LoRaL2::append_fec(const uint8_t* packet, int len, int& new_len)
+{
+	new_len = len;
+
+	uint8_t* rs_decoded      = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));
+	uint8_t* rs_encoded      = (uint8_t*) calloc(MSGSIZ_LONG + REDUNDANCY_LONG, sizeof(char));
+	uint8_t* packet_with_fec = (uint8_t*) calloc(len         + REDUNDANCY_LONG, sizeof(char));
+
+	memcpy(rs_decoded,      packet, len);
+	memcpy(packet_with_fec, packet, len);
+
+	if (len <= MSGSIZ_SHORT) {
+		rsf_short.Encode(rs_decoded, rs_encoded);
+		new_len += REDUNDANCY_SHORT;
+		memcpy(packet_with_fec + len, rs_encoded + MSGSIZ_SHORT, REDUNDANCY_SHORT);
+	} else if (len <= MSGSIZ_MEDIUM) {
+		rsf_medium.Encode(rs_decoded, rs_encoded);
+		new_len += REDUNDANCY_MEDIUM;
+		memcpy(packet_with_fec + len, rs_encoded + MSGSIZ_MEDIUM, REDUNDANCY_MEDIUM);
+	} else {
+		rsf_long.Encode(rs_decoded, rs_encoded);
+		new_len += REDUNDANCY_LONG;
+		memcpy(packet_with_fec + len, rs_encoded + MSGSIZ_LONG, REDUNDANCY_LONG);
+	}
+
+	free(rs_encoded);
+	free(rs_decoded);
+
+	return packet_with_fec;
+}
+
+uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_len, int& err)
+{
+	uint8_t* rs_decoded = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));
+	uint8_t* rs_encoded = (uint8_t*) calloc(MSGSIZ_LONG + REDUNDANCY_LONG, sizeof(char));
+	uint8_t* packet     = (uint8_t*) calloc(len,                           sizeof(char));
+
+	err = 0;
+	net_len = len;
+
+	if (len <= REDUNDANCY_SHORT || len > (MSGSIZ_LONG + REDUNDANCY_LONG)) {
+		err = 999;
+		free(rs_decoded);
+		free(rs_encoded);
+		free(packet);
+		return 0;
+	}
+
+	if (len <= (MSGSIZ_SHORT + REDUNDANCY_SHORT)) {
+		net_len -= REDUNDANCY_SHORT;
+		memcpy(rs_encoded, packet_with_fec, net_len);
+		memcpy(rs_encoded + MSGSIZ_SHORT, packet_with_fec + net_len, REDUNDANCY_SHORT);
+		if (rsf_short.Decode(rs_encoded, rs_decoded)) {
+			err = 998;
+			free(rs_decoded);
+			free(rs_encoded);
+			free(packet);
+			return 0;
+		}
+
+	} else if (len <= (MSGSIZ_MEDIUM + REDUNDANCY_MEDIUM)) {
+		net_len -= REDUNDANCY_MEDIUM;
+		memcpy(rs_encoded, packet_with_fec, net_len);
+		memcpy(rs_encoded + MSGSIZ_MEDIUM, packet_with_fec + net_len, REDUNDANCY_MEDIUM);
+		if (rsf_medium.Decode(rs_encoded, rs_decoded)) {
+			err = 997;
+			free(rs_decoded);
+			free(rs_encoded);
+			free(packet);
+			return 0;
+		}
+
+	} else {
+		net_len -= REDUNDANCY_LONG;
+		memcpy(rs_encoded, packet_with_fec, net_len);
+		memcpy(rs_encoded + MSGSIZ_LONG, packet_with_fec + net_len, REDUNDANCY_LONG);
+		if (rsf_long.Decode(rs_encoded, rs_decoded)) {
+			err = 996;
+			free(rs_decoded);
+			free(rs_encoded);
+			free(packet);
+			return 0;
+		}
+	}
+
+	memcpy(packet, rs_decoded, net_len);
+	return packet;
 }

@@ -18,11 +18,11 @@ public:
 
 typedef void (*recv_callback)(LoRaL2Packet*);
 
-class LoraL2 {
+class LoRaL2 {
 public:
-	LoraL2(const LoraL2&) = delete;
-	void operator=(const LoraL2&) = delete;
-	LoraL2(long int band, int spread, int bandwidth,
+	LoRaL2(const LoRaL2&) = delete;
+	void operator=(const LoRaL2&) = delete;
+	LoRaL2(long int band, int spread, int bandwidth,
 		const char *key, int key_len, recv_callback recv_cb);
 	bool send(const uint8_t *packet, int len);
 	uint32_t speed_bps() const;
@@ -33,6 +33,8 @@ public:
 
 private:
 	void resume_rx();
+	uint8_t *append_fec(const uint8_t *packet, int len, int& new_len);
+	uint8_t *decode_fec(const uint8_t *packet, int len, int& new_len, int& err);
 
 	long int band;
 	int spread;
