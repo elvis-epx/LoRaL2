@@ -187,8 +187,16 @@ RS::ReedSolomon<MSGSIZ_SHORT, REDUNDANCY_SHORT> rsf_short;
 RS::ReedSolomon<MSGSIZ_MEDIUM, REDUNDANCY_MEDIUM> rsf_medium;
 RS::ReedSolomon<MSGSIZ_LONG, REDUNDANCY_LONG> rsf_long;
 
+int LoRaL2::max_payload() const
+{
+	return MSGSIZ_LONG;
+}
+
 uint8_t *LoRaL2::append_fec(const uint8_t* packet, int len, int& new_len)
 {
+	if (len > MSGSIZ_LONG) {
+		len = MSGSIZ_LONG;
+	}
 	new_len = len;
 
 	uint8_t* rs_unencoded    = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));

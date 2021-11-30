@@ -26,6 +26,7 @@ public:
 		const char *key, int key_len, recv_callback recv_cb);
 	bool send(const uint8_t *packet, int len);
 	uint32_t speed_bps() const;
+	int max_payload() const;
 	bool ok() const;
 	// public because LoRa C API needs to call them
 	void on_recv(int len);
