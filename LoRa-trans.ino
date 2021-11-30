@@ -20,6 +20,7 @@ void setup()
 	if (l2->ok()) {
 		Serial.println("Started");
 	} else {
+    // may happen in case some LoRa parameter is wrong
 		Serial.println("NOT started");
 	}
 	oled_init();
@@ -78,10 +79,13 @@ void handle_received_packet()
 	pending_recv = 0;
 }
 
+
+// RX callback
+// Takes the ownership of pkt and its internal buffer
+// Do as little as possible here (e.g. oled_show() may crash)
+
 void packet_received(LoRaL2Packet *pkt)
 {
-	// gets the ownership of pkt and its internal buffer
-	// do as little as possible here
 	if (pending_recv) {
 		delete pending_recv;
 	}
