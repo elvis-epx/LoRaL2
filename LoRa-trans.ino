@@ -47,7 +47,7 @@ void send_packet()
 		return;
 	}
 
-	String msg = String(myid) + " " + String(millis() / 1000) + " ";
+	String msg = String(myid) + " " + String(millis() / 1000) + "s ";
 	int send_size = random(6, l2->max_payload());
 	while (msg.length() < send_size) {
 		msg += ".";
@@ -79,6 +79,7 @@ void handle_received_packet()
 	Serial.print(pending_recv->rssi);
 	Serial.print(" len ");
 	Serial.print(pending_recv->len);
+	
 	if (pending_recv->err) {
 		Serial.print(" with err ");
 		Serial.println(pending_recv->err);

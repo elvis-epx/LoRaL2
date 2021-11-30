@@ -196,6 +196,8 @@ uint8_t *LoRaL2::append_fec(const uint8_t* packet, int len, int& new_len)
 {
 	if (len > MSGSIZ_LONG) {
 		len = MSGSIZ_LONG;
+	} else if (len < 0) {
+		len = 0;
 	}
 	new_len = len;
 
@@ -235,12 +237,9 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 	err = 0;
 	net_len = len;
 
-	if (len <= REDUNDANCY_SHORT || len > (MSGSIZ_LONG + REDUNDANCY_LONG)) {
+	if (len < REDUNDANCY_SHORT || len > (MSGSIZ_LONG + REDUNDANCY_LONG)) {
+		net_len = 0;
 		err = 999;
-		free(rs_encoded);
-		free(rs_decoded);
-		free(packet);
-		return 0;
 	}
 
 	if (len <= (MSGSIZ_SHORT + REDUNDANCY_SHORT)) {
@@ -249,10 +248,6 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 		memcpy(rs_encoded + MSGSIZ_SHORT, packet_with_fec + net_len, REDUNDANCY_SHORT);
 		if (rsf_short.Decode(rs_encoded, rs_decoded)) {
 			err = 998;
-			free(rs_encoded);
-			free(rs_decoded);
-			free(packet);
-			return 0;
 		}
 
 	} else if (len <= (MSGSIZ_MEDIUM + REDUNDANCY_MEDIUM)) {
@@ -261,10 +256,6 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 		memcpy(rs_encoded + MSGSIZ_MEDIUM, packet_with_fec + net_len, REDUNDANCY_MEDIUM);
 		if (rsf_medium.Decode(rs_encoded, rs_decoded)) {
 			err = 997;
-			free(rs_encoded);
-			free(rs_decoded);
-			free(packet);
-			return 0;
 		}
 
 	} else {
@@ -273,13 +264,12 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 		memcpy(rs_encoded + MSGSIZ_LONG, packet_with_fec + net_len, REDUNDANCY_LONG);
 		if (rsf_long.Decode(rs_encoded, rs_decoded)) {
 			err = 996;
-			free(rs_encoded);
-			free(rs_decoded);
-			free(packet);
-			return 0;
 		}
 	}
-
+	
+	free(rs_encoded);
 	memcpy(packet, rs_decoded, net_len);
+	free(rs_decoded);
+	
 	return packet;
 }
