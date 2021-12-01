@@ -57,3 +57,7 @@ Valgrind) available. Embedded APIs are mocked up.
 This project uses slightly modified versions of RS-FEC, AES256, and SHA-256 
 libraries. Their copyrights belong to their respective authors (mentioned 
 directly or indirectly in the header of each file).
+
+# License
+
+The code authored by us is distributed under MIT license.
