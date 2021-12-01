@@ -239,8 +239,6 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 	return packet;
 }
 
-static const char* hex = "0123456789abcdef";
-
 uint8_t* LoRaL2::hashed_key(const char *key, int len)
 {
 	if (! key || len <= 0) {
@@ -250,7 +248,7 @@ uint8_t* LoRaL2::hashed_key(const char *key, int len)
 	Sha256 hash;
 	hash.init();
 	hash.write(2);
-	for (size_t i = 0; i < len; ++i) {
+	for (int i = 0; i < len; ++i) {
 		hash.write((uint8_t) key[i]);
 	}
 	const uint8_t* res = hash.result();
