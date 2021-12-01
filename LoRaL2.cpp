@@ -314,12 +314,13 @@ uint8_t *LoRaL2::encrypt(const uint8_t *packet, int payload_len, int& tot_len)
 
 uint8_t *LoRaL2::decrypt(const uint8_t *enc_packet, int tot_len, int& pay_len, int& err)
 {
+	uint8_t* packet = (uint8_t*) calloc(tot_len + 1, sizeof(uint8_t));
+
 	if (!hkey) {
 		err = 0;
 		pay_len = tot_len;
-		uint8_t* copy = (uint8_t*) malloc(tot_len);
-		memcpy(copy, enc_packet, tot_len);
-		return copy;
+		memcpy(packet, enc_packet, tot_len);
+		return packet;
 	}
 
 	// if receiver has the wrong key, the payload will be mangled and will
@@ -335,18 +336,16 @@ uint8_t *LoRaL2::decrypt(const uint8_t *enc_packet, int tot_len, int& pay_len, i
 		// packet too short
 		err = 1001;
 		pay_len = tot_len;
-		uint8_t* copy = (uint8_t*) malloc(tot_len);
-		memcpy(copy, enc_packet, tot_len);
-		return copy;
+		memcpy(packet, enc_packet, tot_len);
+		return packet;
 	}
 
 	if (tot_len % aes256.blockSize() != 0) {
 		// packet not a multiple of block
 		err = 1002;
 		pay_len = tot_len;
-		uint8_t* copy = (uint8_t*) malloc(tot_len);
-		memcpy(copy, enc_packet, tot_len);
-		return copy;
+		memcpy(packet, enc_packet, tot_len);
+		return packet;
 	}
 
 	size_t blocks = tot_len / aes256.blockSize();
@@ -375,12 +374,10 @@ uint8_t *LoRaL2::decrypt(const uint8_t *enc_packet, int tot_len, int& pay_len, i
 		free(buffer_interm);
 		err = 1003;
 		pay_len = tot_len;
-		uint8_t* copy = (uint8_t*) malloc(tot_len);
-		memcpy(copy, enc_packet, tot_len);
-		return copy;
+		memcpy(packet, enc_packet, tot_len);
+		return packet;
 	}
 
-	uint8_t *packet = (uint8_t*) malloc(pay_len);
 	memcpy(packet, buffer_interm + aes256.blockSize() + CRYPTO_LENGTH_LEN, pay_len);
 	free(buffer_interm);
 
