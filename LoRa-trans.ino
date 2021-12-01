@@ -6,13 +6,11 @@
 #include "SSD1306.h"
 #include "LoRaL2.h"
 #include "ArduinoBridge.h"
+#include "LoRaParams.h"
 
 LoRaL2 *l2;
 char myid[5];
 
-#define BAND    916750000
-#define SPREAD  7
-#define BWIDTH  125000
 #define ENCRYPTION_KEY "abracadabra"
 
 #define HALF_SEND_INTERVAL 1000

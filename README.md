@@ -58,6 +58,28 @@ This project uses slightly modified versions of RS-FEC, AES256, and SHA-256
 libraries. Their copyrights belong to their respective authors (mentioned 
 directly or indirectly in the header of each file).
 
+# LoRa parameters
+
+In LoRaParams.h, the main LoRa parameters (frequency, spread and bandwidth)
+can be tweaked. The default parameters deliver 5kbps of speed and have a good
+balance between reliability, range and speed, especially for testing.
+
+If you need really good range, try to reduce bandwidth to 62500 (if your LoRa
+chip supports it) and increase spread to SF9. We have had very good range in
+urban areas with this setup, and reach several km of range in almost-clear sight.
+This is 9db better than the default, at the cost of low speed (0.8kbps). One could
+use 125kHz bandwidth and SF10, but in our experiences the narrower bandwidth did
+better.
+
+Be sure to generate very few packets withvery small payloads if you go very low speed.
+An encrypted packet has a minimum of 44 octets, which takes half a second
+in 0.8kbps speed.
+
+The project disables CRC mode, enables explicit mode and uses the lowest
+L1 redundancy possible (5/4). This is hardcoded within Radio.cpp, and should
+be kept as they are. In particular the explicit mode should not be turned off,
+since the code depends on it to function.
+
 # License
 
 The code authored by us is distributed under MIT license.
