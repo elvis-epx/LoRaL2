@@ -46,6 +46,9 @@ int32_t arduino_random(int32_t min, int32_t max)
 
 class LoRaL2;
 
+uint8_t* lora_test_last_sent = 0;
+int lora_test_last_sent_len = 0;
+
 bool lora_start(long int band, int spread, int bandwidth, int power,
 		int paboost, int cr4slsh, LoRaL2 *pobserver)
 {
@@ -61,6 +64,13 @@ bool lora_begin_packet()
 	return true;
 }
 
-bool lora_finish_packet(const uint8_t* packet, int len)
+void lora_finish_packet(const uint8_t* packet, int len)
 {
+	if (lora_test_last_sent) {
+		free(lora_test_last_sent);
+		lora_test_last_sent = 0;
+	}
+	lora_test_last_sent = (uint8_t*) malloc(len);
+	memcpy(lora_test_last_sent, packet, len);
+	lora_test_last_sent_len = len;
 }

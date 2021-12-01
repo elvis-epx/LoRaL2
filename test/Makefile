@@ -15,11 +15,10 @@ test: test.cpp $(OBJ) *.h
 recov:
 	rm -f *.gcda
 
-coverage:
+coverage: test
 	rm -f *.info
+	./test
 	gcov test.cpp
-	gcov testnet.cpp
-	gcov testnet2.cpp
 	lcov -c --directory . --output-file main_coverage.info
 	lcov -r main_coverage.info '*/RS-FEC.h' -o main_coverage.info
 	lcov -r main_coverage.info '*/FakeArduino.cpp' -o main_coverage.info
