@@ -7,8 +7,9 @@ char myid[5];
 #define BAND    916750000
 #define SPREAD  7
 #define BWIDTH  125000
+#define ENCRYPTION_KEY "abracadabra"
 
-#define HALF_SEND_INTERVAL 5000
+#define HALF_SEND_INTERVAL 1000
 
 void packet_received(LoRaL2Packet *pkt);
 
@@ -21,8 +22,9 @@ void setup()
 	Serial.begin(115200);
 	Serial.print("Starting, ID is ");
 	Serial.println(myid);
-	const char *encryption_key = 0;
-	l2 = new LoRaL2(BAND, SPREAD, BWIDTH, 0, 0, packet_received);
+	l2 = new LoRaL2(BAND, SPREAD, BWIDTH,
+			ENCRYPTION_KEY, strlen(ENCRYPTION_KEY),
+			packet_received);
 	if (l2->ok()) {
 		Serial.println("Started");
 	} else {
@@ -33,7 +35,7 @@ void setup()
 }
 
 static LoRaL2Packet *pending_recv = 0;
-long int next_send = millis() + HALF_SEND_INTERVAL + random(1, HALF_SEND_INTERVAL);
+long int next_send = millis() + HALF_SEND_INTERVAL + random(0, HALF_SEND_INTERVAL * 2);
 
 void loop()
 {	
@@ -48,7 +50,7 @@ void send_packet()
 	}
 
 	String msg = String(myid) + " " + String(millis() / 1000) + "s ";
-	int send_size = random(6, l2->max_payload());
+	int send_size = random(6, l2->max_payload() + 1);
 	while (msg.length() < send_size) {
 		msg += ".";
 	}
@@ -65,7 +67,7 @@ void send_packet()
 		oled_show(msg2.c_str());
 	}
 	
-	next_send = millis() + HALF_SEND_INTERVAL + random(1, HALF_SEND_INTERVAL);
+	next_send = millis() + HALF_SEND_INTERVAL + random(0, HALF_SEND_INTERVAL * 2);
 
 }
 
@@ -86,6 +88,15 @@ void handle_received_packet()
 	} else {
 		Serial.print(" pay ");
 		Serial.println((const char *) pending_recv->packet);
+
+		/*
+		for (int i = 0; i < pending_recv->len; ++i) {
+			Serial.print((int) pending_recv->packet[i]);
+			Serial.print(" ");
+		}
+		Serial.println(" ");
+		*/
+		
 		String msg = "Recv ";
 		msg += (const char*) pending_recv->packet;
 		oled_show(msg.c_str());
