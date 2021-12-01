@@ -1,0 +1,4 @@
+Unit testing in PC (code coverage/Valgrind)
+Separate class LoRaL2Packet in its own file
+	Move FEC and crypto code to that class
+Mention modified 3rd libs in README
