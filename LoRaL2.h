@@ -1,5 +1,12 @@
+/*
+ * LoRa-trans (LoRa layer-2) project
+ * Copyright (c) 2021 PU5EPX
+ */
+
 #ifndef __LORAL2_H
 #define __LORAL2_H
+
+#include <inttypes.h>
 
 class LoRaL2Packet {
 public:
@@ -32,10 +39,10 @@ public:
 	int max_payload() const;
 	bool ok() const;
 	// public because LoRa C API needs to call them
-	void on_recv(int tot_len);
+	void on_recv(int rssi, uint8_t* packet, int len);
 	void on_sent();
 
-private:
+	/* private */
 	void resume_rx();
 	uint8_t *encrypt(const uint8_t *packet, int len, int& new_len);
 	uint8_t *append_fec(const uint8_t *packet, int len, int& new_len);

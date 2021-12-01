@@ -1,7 +1,14 @@
+/*
+ * LoRa-trans (LoRa layer-2) project
+ * Copyright (c) 2021 PU5EPX
+ */
+
 #include <stdlib.h>
 #include "RS-FEC.h"
 #include "AES.h"
 #include "sha256.h"
+#include "ArduinoBridge.h"
+#include "Radio.h"
 
 #define POWER   20
 #define PABOOST 1
@@ -19,46 +26,15 @@ static const int REDUNDANCY_LONG = 20;
 #define CRYPTO_MAGIC 0x05
 #define CRYPTO_LENGTH_LEN  2
 
-#ifndef __AVR__
-#include <SPI.h>
-#endif
-#include <LoRa.h>
-
-#ifndef __AVR__
-
-// Pin defintion of WIFI LoRa 32
-// HelTec AutoMation 2017 support@heltec.cn 
-#define SCK     5    // GPIO5  -- SX127x's SCK
-#define MISO    19   // GPIO19 -- SX127x's MISO
-#define MOSI    27   // GPIO27 -- SX127x's MOSI
-
-#define SS      18   // GPIO18 -- SX127x's CS
-#define RST     14   // GPIO14 -- SX127x's RESET
-#define DIO0    26   // GPIO26 -- SX127x's IRQ(Interrupt Request)
-
-#else
-
-#define SS 8
-#define RST 4
-#define DIO0 7
-
-#endif
-
 #define STATUS_IDLE 0
 #define STATUS_RECEIVING 1
 #define STATUS_TRANSMITTING 2
 
 #include "LoRaL2.h"
 
-static LoRaL2* observer;
-static void on_recv_trampoline(int len);
-static void on_sent_trampoline();
-
 LoRaL2::LoRaL2(long int band, int spread, int bandwidth,
 		const char *key, int key_len, recv_callback recv_cb)
 {
-	observer = this;
-
 	this->band = band;
 	this->spread = spread;
 	this->bandwidth = bandwidth;
@@ -67,23 +43,10 @@ LoRaL2::LoRaL2(long int band, int spread, int bandwidth,
 
 	this->status = STATUS_IDLE;
 
-#ifndef __AVR__
-	SPI.begin(SCK, MISO, MOSI, SS);
-#endif
-	LoRa.setPins(SS, RST, DIO0);
-
-	if (!LoRa.begin(band)) {
+	if (!lora_start(band, spread, bandwidth, POWER, PABOOST, CR4SLSH, this)) {
 		_ok = false;
+		return;
 	}
-
-	LoRa.setTxPower(POWER, PABOOST);
-	LoRa.setSpreadingFactor(spread);
-	LoRa.setSignalBandwidth(bandwidth);
-	LoRa.setCodingRate4(CR4SLSH);
-	LoRa.disableCrc();
-	LoRa.onReceive(on_recv_trampoline);
-	LoRa.onTxDone(on_sent_trampoline);
-	resume_rx();
 
 	_ok = true;
 }
@@ -112,7 +75,7 @@ void LoRaL2::resume_rx()
 {
 	if (status != STATUS_RECEIVING) {
 		status = STATUS_RECEIVING;
-		LoRa.receive();
+		lora_receive();
 	}
 }
 
@@ -122,15 +85,8 @@ void LoRaL2::on_sent()
 	resume_rx();
 }
 
-void LoRaL2::on_recv(int tot_len)
+void LoRaL2::on_recv(int rssi, uint8_t *buffer, int tot_len)
 {
-	uint8_t *buffer = (uint8_t*) calloc(tot_len, sizeof(char));
-
-	int rssi = LoRa.packetRssi();
-	for (size_t i = 0; i < tot_len; i++) {
-		buffer[i] = LoRa.read();
-	}
-
 	int encrypted_len = 0;
 	int err = 0;
 	uint8_t *encrypted_packet = decode_fec(buffer, tot_len, encrypted_len, err);
@@ -155,7 +111,7 @@ bool LoRaL2::send(const uint8_t *packet, int payload_len)
 		return false;
 	}
 
-	if (! LoRa.beginPacket()) {
+	if (! lora_begin_packet()) {
 		// can only fail if in tx mode, don't touch anything
 		return false;
 	}
@@ -168,24 +124,11 @@ bool LoRaL2::send(const uint8_t *packet, int payload_len)
 	free(encrypted_packet);
 
 	status = STATUS_TRANSMITTING;
-	LoRa.write(fec_packet, tot_len);
-	LoRa.endPacket(true);
+	lora_finish_packet(fec_packet, tot_len);
 
 	free(fec_packet);
 
 	return true;
-}
-
-// ugly
-static void on_recv_trampoline(int len)
-{
-	observer->on_recv(len);
-}
-
-// ugly
-static void on_sent_trampoline()
-{
-	observer->on_sent();
 }
 
 LoRaL2Packet::LoRaL2Packet(uint8_t *packet, int len, int rssi, int err)
@@ -326,7 +269,7 @@ void LoRaL2::gen_iv(uint8_t* buffer, int len)
 {
 	buffer[0] = CRYPTO_MAGIC;
 	for (int i = 1; i < len; ++i) {
-		buffer[i] = random(0, 256);
+		buffer[i] = arduino_random(0, 256);
 	}
 }
 

@@ -1,5 +1,11 @@
+/*
+ * LoRa-trans (LoRa layer-2) project
+ * Copyright (c) 2021 PU5EPX
+ */
+
 #include "SSD1306.h"
 #include "LoRaL2.h"
+#include "ArduinoBridge.h"
 
 LoRaL2 *l2;
 char myid[5];
@@ -35,7 +41,8 @@ void setup()
 }
 
 static LoRaL2Packet *pending_recv = 0;
-long int next_send = millis() + HALF_SEND_INTERVAL + random(0, HALF_SEND_INTERVAL * 2);
+long int next_send = arduino_millis() + HALF_SEND_INTERVAL +
+			arduino_random(0, HALF_SEND_INTERVAL * 2);
 
 void loop()
 {	
@@ -45,12 +52,12 @@ void loop()
 
 void send_packet()
 {
-	if (millis() < next_send) {
+	if (arduino_millis() < next_send) {
 		return;
 	}
 
-	String msg = String(myid) + " " + String(millis() / 1000) + "s ";
-	int send_size = random(6, l2->max_payload() + 1);
+	String msg = String(myid) + " " + String(arduino_millis() / 1000) + "s ";
+	int send_size = arduino_random(6, l2->max_payload() + 1);
 	while (msg.length() < send_size) {
 		msg += ".";
 	}
@@ -67,7 +74,8 @@ void send_packet()
 		oled_show(msg2.c_str());
 	}
 	
-	next_send = millis() + HALF_SEND_INTERVAL + random(0, HALF_SEND_INTERVAL * 2);
+	next_send = arduino_millis() + HALF_SEND_INTERVAL +
+			arduino_random(0, HALF_SEND_INTERVAL * 2);
 
 }
 
@@ -118,7 +126,6 @@ void packet_received(LoRaL2Packet *pkt)
 	}
 	pending_recv = pkt;
 }
-
 
 SSD1306 display(0x3c, 4, 15);
 

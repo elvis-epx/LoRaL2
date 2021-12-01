@@ -48,3 +48,12 @@ of FEC code.
 
 If encryption is on, maximum payload is 166 octets, due to additional preambles
 (IV, length) and encryption block round-up.
+
+## Testing
+
+Unit testing is carried out on PC, given the superior tools (code coverage,
+Valgrind) available. Embedded APIs are mocked up.
+
+This project uses slightly modified versions of RS-FEC, AES256, and SHA-256 
+libraries. Their copyrights belong to their respective authors (mentioned 
+directly or indirectly in the header of each file).
