@@ -13,9 +13,10 @@ char myid[5];
 
 #define ENCRYPTION_KEY "abracadabra"
 
-#define HALF_SEND_INTERVAL 1000
+#define HALF_SEND_INTERVAL 5000
 
 void packet_received(LoRaL2Packet *pkt);
+void oled_show(const char* msg, const char *msg2 = 0);
 
 void setup()
 {
@@ -54,27 +55,27 @@ void send_packet()
 		return;
 	}
 
-	String msg = String(myid) + " " + String(arduino_millis() / 1000) + "s ";
+	String payload = String(myid) + " " + String(arduino_millis() / 1000) + "s ";
 	int send_size = arduino_random(6, l2->max_payload() + 1);
-	while (msg.length() < send_size) {
-		msg += ".";
+	while (payload.length() < send_size) {
+		payload += ".";
 	}
+
+	String msg = "Send ";
+	String msg2 = "  len " + String(payload.length());
 	
-	Serial.print("Sending len ");
-	Serial.print(msg.length());
-	Serial.print(" ");
-	Serial.println(msg);
-	if (!l2->send((const uint8_t*) msg.c_str(), msg.length())) {
-		Serial.println("Send error");
-		oled_show("Send error");
+	if (!l2->send((const uint8_t*) payload.c_str(), payload.length())) {
+		msg += " (ERROR)";
 	} else {
-		String msg2 = "Sent " + msg;
-		oled_show(msg2.c_str());
+		msg += payload;
 	}
+
+	Serial.println(msg);
+	Serial.println(msg2);
+	oled_show(msg.c_str(), msg2.c_str());
 	
 	next_send = arduino_millis() + HALF_SEND_INTERVAL +
 			arduino_random(0, HALF_SEND_INTERVAL * 2);
-
 }
 
 void handle_received_packet()
@@ -83,30 +84,17 @@ void handle_received_packet()
 		return;
 	}
 
-	Serial.print("Recv RSSI ");
-	Serial.print(pending_recv->rssi);
-	Serial.print(" len ");
-	Serial.print(pending_recv->len);
-	
+	String msg;
+	String msg2 = "  RSSI " + String(pending_recv->rssi) + " len " + String(pending_recv->len);
 	if (pending_recv->err) {
-		Serial.print(" with err ");
-		Serial.println(pending_recv->err);
+		msg = "Recv with ERROR " + String(pending_recv->err);
 	} else {
-		Serial.print(" pay ");
-		Serial.println((const char *) pending_recv->packet);
-
-		/*
-		for (int i = 0; i < pending_recv->len; ++i) {
-			Serial.print((int) pending_recv->packet[i]);
-			Serial.print(" ");
-		}
-		Serial.println(" ");
-		*/
-		
-		String msg = "Recv ";
-		msg += (const char*) pending_recv->packet;
-		oled_show(msg.c_str());
+		msg = "Recv " + String((const char *) pending_recv->packet);
 	}
+	
+	Serial.println(msg);
+	Serial.println(msg2);
+	oled_show(msg.c_str(), msg2.c_str());
 
 	delete pending_recv;
 	pending_recv = 0;
@@ -142,9 +130,12 @@ void oled_init()
 	display.setTextAlignment(TEXT_ALIGN_LEFT);
 }
 
-void oled_show(const char* msg)
+void oled_show(const char* msg, const char *msg2)
 {
 	display.clear();
 	display.drawString(0, 0, msg);
+	if (msg2) {
+		display.drawString(0, 24, msg2);
+	}
 	display.display();
 }
