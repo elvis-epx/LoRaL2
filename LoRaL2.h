@@ -6,7 +6,8 @@
 #ifndef __LORAL2_H
 #define __LORAL2_H
 
-#include <inttypes.h>
+#include <cstddef>
+#include <cinttypes>
 
 class LoRaL2Packet {
 public:
@@ -48,7 +49,7 @@ public:
 	uint8_t *append_fec(const uint8_t *packet, int len, int& new_len);
 	uint8_t *decode_fec(const uint8_t *packet, int len, int& new_len, int& err);
 	uint8_t *decrypt(const uint8_t *packet, int len, int& new_len, int& err);
-	static uint8_t *hashed_key(const char* key, int len);
+	static uint8_t *hashed_key(const char* key, size_t len);
 	static void gen_iv(uint8_t* buffer, int len);
 
 	long int band;

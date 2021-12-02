@@ -239,9 +239,9 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_le
 	return packet;
 }
 
-uint8_t* LoRaL2::hashed_key(const char *key, int len)
+uint8_t* LoRaL2::hashed_key(const char *key, size_t len)
 {
-	if (! key || len <= 0) {
+	if (! key) {
 		return 0;
 	}
 

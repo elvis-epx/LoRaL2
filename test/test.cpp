@@ -4,21 +4,33 @@
 #include <cstring>
 #include <cstdio>
 
-#define ENCRYPTION_KEY "abracadabra"
-
-void packet_received(LoRaL2Packet *pkt);
-
 extern uint8_t* lora_test_last_sent;
 extern int lora_test_last_sent_len;
 
 uint8_t* test_payload;
 int test_len;
 
-int main()
+void test_1_packet_received(LoRaL2Packet *pkt)
+{
+	printf("\tReceived len %d\n", pkt->len);
+	if (pkt->len != test_len) {
+		printf("\t\tMismatched length\n");
+		exit(1);
+	}
+	for (int i = 0 ; i < test_len; ++i) {
+		if (pkt->packet[i] != test_payload[i]) {
+			printf("\t\tMismatched octet %d\n", i);
+			exit(1);
+		}
+	}
+	delete pkt;
+}
+
+void test_1(const char *key)
 {
 	LoRaL2* l2 = new LoRaL2(BAND, SPREAD, BWIDTH,
-			ENCRYPTION_KEY, strlen(ENCRYPTION_KEY),
-			packet_received);
+			key, key ? strlen(key) : 0,
+			test_1_packet_received);
 	printf("Status %d, Speed in bps: %d\n", !!l2->ok(), l2->speed_bps());
 
 	for (int len = 0; len <= l2->max_payload(); ++len) {
@@ -46,18 +58,9 @@ int main()
 	delete l2;
 }
 
-void packet_received(LoRaL2Packet *pkt)
+int main()
 {
-	printf("\tReceived len %d\n", pkt->len);
-	if (pkt->len != test_len) {
-		printf("\t\tMismatched length\n");
-		exit(1);
-	}
-	for (int i = 0 ; i < test_len; ++i) {
-		if (pkt->packet[i] != test_payload[i]) {
-			printf("\t\tMismatched octet %d\n", i);
-			exit(1);
-		}
-	}
-	delete pkt;
+	test_1("abracadabra");
+	test_1("");
+	test_1(0);
 }
