@@ -200,9 +200,8 @@ uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, size_t len, size_t& 
 	if (len < REDUNDANCY_SHORT || len > (MSGSIZ_LONG + REDUNDANCY_LONG)) {
 		net_len = 0;
 		err = 999;
-	}
 
-	if (len <= (MSGSIZ_SHORT + REDUNDANCY_SHORT)) {
+	} else if (len <= (MSGSIZ_SHORT + REDUNDANCY_SHORT)) {
 		net_len -= REDUNDANCY_SHORT;
 		memcpy(rs_encoded, packet_with_fec, net_len);
 		memcpy(rs_encoded + MSGSIZ_SHORT, packet_with_fec + net_len, REDUNDANCY_SHORT);

@@ -123,6 +123,20 @@ void test_1(const char *key)
 		printf("\tReceiving LDR len %lu\n", recv_len);
 		l2->on_recv(-50, recv_buffer, recv_len);
 
+		// short packet
+		test_exp_err_min = test_exp_err_max = 999;
+		recv_len = 9;
+		recv_buffer = (uint8_t*) malloc(recv_len);
+		printf("\tReceiving short len %lu\n", recv_len);
+		l2->on_recv(-50, recv_buffer, recv_len);
+
+		// long packet
+		test_exp_err_min = test_exp_err_max = 999;
+		recv_len = 300;
+		recv_buffer = (uint8_t*) malloc(recv_len);
+		printf("\tReceiving long len %lu\n", recv_len);
+		l2->on_recv(-50, recv_buffer, recv_len);
+
 		// cleanup
 		free(lora_test_last_sent);
 		lora_test_last_sent = 0;
