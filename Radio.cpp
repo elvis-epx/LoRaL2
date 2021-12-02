@@ -84,7 +84,7 @@ bool lora_begin_packet()
 	return LoRa.beginPacket();
 }
 
-void lora_finish_packet(const uint8_t* packet, int len)
+void lora_finish_packet(const uint8_t* packet, size_t len)
 {
 	LoRa.write(packet, len);
 	LoRa.endPacket(true);

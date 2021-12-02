@@ -15,12 +15,12 @@
 #define CR4SLSH 5
 
 // FEC-related constants
-static const int MSGSIZ_SHORT = 50;
-static const int MSGSIZ_MEDIUM = 100;
-static const int MSGSIZ_LONG = 200;
-static const int REDUNDANCY_SHORT = 10;
-static const int REDUNDANCY_MEDIUM = 14;
-static const int REDUNDANCY_LONG = 20;
+static const size_t MSGSIZ_SHORT = 50;
+static const size_t MSGSIZ_MEDIUM = 100;
+static const size_t MSGSIZ_LONG = 200;
+static const size_t REDUNDANCY_SHORT = 10;
+static const size_t REDUNDANCY_MEDIUM = 14;
+static const size_t REDUNDANCY_LONG = 20;
 
 // Crypto-related constant
 #define CRYPTO_MAGIC 0x05
@@ -33,7 +33,7 @@ static const int REDUNDANCY_LONG = 20;
 #include "LoRaL2.h"
 
 LoRaL2::LoRaL2(long int band, int spread, int bandwidth,
-		const char *key, int key_len, recv_callback recv_cb)
+		const char *key, size_t key_len, recv_callback recv_cb)
 {
 	this->band = band;
 	this->spread = spread;
@@ -85,15 +85,15 @@ void LoRaL2::on_sent()
 	resume_rx();
 }
 
-void LoRaL2::on_recv(int rssi, uint8_t *buffer, int tot_len)
+void LoRaL2::on_recv(int rssi, uint8_t *buffer, size_t tot_len)
 {
-	int encrypted_len = 0;
+	size_t encrypted_len = 0;
 	int err = 0;
 	uint8_t *encrypted_packet = decode_fec(buffer, tot_len, encrypted_len, err);
 	free(buffer);
 	
 	uint8_t *packet;
-	int packet_len = 0;
+	size_t packet_len = 0;
 	if (!err) {
 		packet = decrypt(encrypted_packet, encrypted_len, packet_len, err);
 		free(encrypted_packet);
@@ -105,7 +105,7 @@ void LoRaL2::on_recv(int rssi, uint8_t *buffer, int tot_len)
 	recv_cb(new LoRaL2Packet(packet, packet_len, rssi, err));
 }
 
-bool LoRaL2::send(const uint8_t *packet, int payload_len)
+bool LoRaL2::send(const uint8_t *packet, size_t payload_len)
 {
 	if (status == STATUS_TRANSMITTING) {
 		return false;
@@ -116,10 +116,10 @@ bool LoRaL2::send(const uint8_t *packet, int payload_len)
 		return false;
 	}
 
-	int encrypted_len;
+	size_t encrypted_len;
 	uint8_t* encrypted_packet = encrypt(packet, payload_len, encrypted_len);
 
-	int tot_len;
+	size_t tot_len;
 	uint8_t* fec_packet = append_fec(encrypted_packet, encrypted_len, tot_len);
 	free(encrypted_packet);
 
@@ -131,7 +131,7 @@ bool LoRaL2::send(const uint8_t *packet, int payload_len)
 	return true;
 }
 
-LoRaL2Packet::LoRaL2Packet(uint8_t *packet, int len, int rssi, int err)
+LoRaL2Packet::LoRaL2Packet(uint8_t *packet, size_t len, int rssi, int err)
 {
 	this->packet = (err ? 0 : packet);
 	this->len = len;
@@ -148,7 +148,7 @@ RS::ReedSolomon<MSGSIZ_SHORT, REDUNDANCY_SHORT> rsf_short;
 RS::ReedSolomon<MSGSIZ_MEDIUM, REDUNDANCY_MEDIUM> rsf_medium;
 RS::ReedSolomon<MSGSIZ_LONG, REDUNDANCY_LONG> rsf_long;
 
-int LoRaL2::max_payload() const
+size_t LoRaL2::max_payload() const
 {
 	if (hkey) {
 		AES256 aes256;
@@ -157,7 +157,7 @@ int LoRaL2::max_payload() const
 	return MSGSIZ_LONG;
 }
 
-uint8_t *LoRaL2::append_fec(const uint8_t* packet, int len, int& new_len)
+uint8_t *LoRaL2::append_fec(const uint8_t* packet, size_t len, size_t& new_len)
 {
 	if (len > MSGSIZ_LONG) {
 		len = MSGSIZ_LONG;
@@ -193,7 +193,7 @@ uint8_t *LoRaL2::append_fec(const uint8_t* packet, int len, int& new_len)
 	return packet_with_fec;
 }
 
-uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, int len, int& net_len, int& err)
+uint8_t *LoRaL2::decode_fec(const uint8_t* packet_with_fec, size_t len, size_t& net_len, int& err)
 {
 	uint8_t* rs_encoded = (uint8_t*) calloc(MSGSIZ_LONG + REDUNDANCY_LONG, sizeof(char));
 	uint8_t* rs_decoded = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));
@@ -248,7 +248,7 @@ uint8_t* LoRaL2::hashed_key(const char *key, size_t len)
 	Sha256 hash;
 	hash.init();
 	hash.write(2);
-	for (int i = 0; i < len; ++i) {
+	for (size_t i = 0; i < len; ++i) {
 		hash.write((uint8_t) key[i]);
 	}
 	const uint8_t* res = hash.result();
@@ -263,15 +263,15 @@ uint8_t* LoRaL2::hashed_key(const char *key, size_t len)
 }
 
 // TODO cryptografically secure IV
-void LoRaL2::gen_iv(uint8_t* buffer, int len)
+void LoRaL2::gen_iv(uint8_t* buffer, size_t len)
 {
 	buffer[0] = CRYPTO_MAGIC;
-	for (int i = 1; i < len; ++i) {
+	for (size_t i = 1; i < len; ++i) {
 		buffer[i] = arduino_random(0, 256);
 	}
 }
 
-uint8_t *LoRaL2::encrypt(const uint8_t *packet, int payload_len, int& tot_len)
+uint8_t *LoRaL2::encrypt(const uint8_t *packet, size_t payload_len, size_t& tot_len)
 {
 	if (! hkey) {
 		tot_len = payload_len;
@@ -310,7 +310,7 @@ uint8_t *LoRaL2::encrypt(const uint8_t *packet, int payload_len, int& tot_len)
 	return buffer;
 }
 
-uint8_t *LoRaL2::decrypt(const uint8_t *enc_packet, int tot_len, int& pay_len, int& err)
+uint8_t *LoRaL2::decrypt(const uint8_t *enc_packet, size_t tot_len, size_t& pay_len, int& err)
 {
 	uint8_t* packet = (uint8_t*) calloc(tot_len + 1, sizeof(uint8_t));
 

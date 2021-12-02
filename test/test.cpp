@@ -8,18 +8,18 @@ extern uint8_t* lora_test_last_sent;
 extern int lora_test_last_sent_len;
 
 uint8_t* test_payload;
-int test_len;
+size_t test_len;
 
 void test_1_packet_received(LoRaL2Packet *pkt)
 {
-	printf("\tReceived len %d\n", pkt->len);
+	printf("\tReceived len %lu\n", pkt->len);
 	if (pkt->len != test_len) {
 		printf("\t\tMismatched length\n");
 		exit(1);
 	}
-	for (int i = 0 ; i < test_len; ++i) {
+	for (size_t i = 0 ; i < test_len; ++i) {
 		if (pkt->packet[i] != test_payload[i]) {
-			printf("\t\tMismatched octet %d\n", i);
+			printf("\t\tMismatched octet %lu\n", i);
 			exit(1);
 		}
 	}
@@ -33,14 +33,14 @@ void test_1(const char *key)
 			test_1_packet_received);
 	printf("Status %d, Speed in bps: %d\n", !!l2->ok(), l2->speed_bps());
 
-	for (int len = 0; len <= l2->max_payload(); ++len) {
+	for (size_t len = 0; len <= l2->max_payload(); ++len) {
 		test_payload = (uint8_t*) malloc(len);
 		test_len = len;
-		for (int i = 0; i < len; ++i) {
+		for (size_t i = 0; i < len; ++i) {
 			test_payload[i] = random() % 256;
 		}
 
-		printf("Sending len %d\n", len);
+		printf("Sending len %lu\n", len);
 		l2->send(test_payload, len);
 
 		l2->on_sent();
