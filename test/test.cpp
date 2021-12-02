@@ -51,7 +51,7 @@ void test_1(const char *key)
 			test_1_packet_received);
 	printf("Status %d, Speed in bps: %d\n", !!l2->ok(), l2->speed_bps());
 
-	for (size_t len = 0; len <= l2->max_payload(); ++len) {
+	for (size_t len = 0; len <= l2->max_payload() + 1; ++len) {
 		test_payload = (uint8_t*) malloc(len);
 		test_len = len;
 		for (size_t i = 0; i < len; ++i) {
@@ -59,13 +59,22 @@ void test_1(const char *key)
 		}
 
 		printf("Sending len %lu\n", len);
-		if (!l2->send(test_payload, len)) {
-			printf("send() failed\n");
-			exit(1);
-		}
-		if (l2->send((const uint8_t*) "", 0)) {
-			printf("re-send() before on_sent() did not fail\n");
-			exit(1);
+		if (len <= l2->max_payload()) {
+			if (!l2->send(test_payload, len)) {
+				printf("send() failed\n");
+				exit(1);
+			}
+			if (l2->send((const uint8_t*) "", 0)) {
+				printf("re-send() before on_sent() did not fail\n");
+				exit(1);
+			}
+		} else {
+			if (l2->send(test_payload, len)) {
+				printf("send() should have failed (payload too big)\n");
+				exit(1);
+			}
+			free(test_payload);
+			continue;
 		}
 
 		l2->on_sent();
