@@ -144,8 +144,8 @@ static void test_1(const char *key)
 	}
 
 	// hazing tests, should not go past FEC
-	// FIXME making RS-FEC to abort, check why
-	for (int i = 0; i < 100; ++i) {
+	// FIXME making RS-FEC to abort, at least in MacOS, check why
+	for (int i = 0; i < 10000; ++i) {
 		test_exp_err_min = 1;
 		test_exp_err_max = 2000;
 		recv_len = random() % 300;
