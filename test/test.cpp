@@ -9,10 +9,10 @@
 extern uint8_t* lora_test_last_sent;
 extern int lora_test_last_sent_len;
 
-uint8_t* test_payload;
-size_t test_len;
-int test_exp_err_min;
-int test_exp_err_max;
+static uint8_t* test_payload;
+static size_t test_len;
+static int test_exp_err_min;
+static int test_exp_err_max;
 
 static uint8_t* memdup(const uint8_t* buffer, size_t len)
 {
@@ -21,7 +21,7 @@ static uint8_t* memdup(const uint8_t* buffer, size_t len)
 	return res;
 }
 
-void test_1_packet_received(LoRaL2Packet *pkt)
+static void test_1_packet_received(LoRaL2Packet *pkt)
 {
 	printf("\tReceived len %lu\n", pkt->len);
 	if (pkt->err < test_exp_err_min || pkt->err > test_exp_err_max) {
@@ -44,7 +44,7 @@ void test_1_packet_received(LoRaL2Packet *pkt)
 	delete pkt;
 }
 
-void test_1(const char *key)
+static void test_1(const char *key)
 {
 	LoRaL2* l2 = new LoRaL2(BAND, SPREAD, BWIDTH,
 			key, key ? strlen(key) : 0,
@@ -160,11 +160,72 @@ void test_1(const char *key)
 	delete l2;
 }
 
+static uint8_t hc_enc[] = {5, 183, 73, 105, 43, 39, 69, 61, 255, 30, 89, 201, 11, 134, 253, 62,
+			106, 127, 124, 123, 173, 100, 90, 46, 197, 2, 254, 181, 0, 143, 22, 164};
+static const size_t hc_enc_len = 32;
+static const char *hc_unenc = "highcastle";
+
+static void test_encryption()
+{
+	LoRaL2* l2 = new LoRaL2(BAND, SPREAD, BWIDTH,
+			"abracadabra", strlen("abracadabra"),
+			0);
+
+	size_t len;
+	int err;
+	uint8_t* res;
+
+	res = l2->decrypt(hc_enc, hc_enc_len, len, err);
+	if (err != 0) {
+		printf("Decryption test: unexpected err %d\n", err);
+		exit(1);
+	}
+	if (len != strlen(hc_unenc)) {
+		printf("Decryption test: bad len %lu\n", len);
+		exit(1);
+	}
+	for (size_t i = 0 ; i < len; ++i) {
+		if (res[i] != hc_unenc[i]) {
+			printf("\t\tDecryption test: mismatched octet %lu\n", i);
+			exit(1);
+		}
+	}
+	free(res);
+
+	// 1 too short
+	res = l2->decrypt(hc_enc, hc_enc_len - 1, len, err);
+	if (err != 1001) {
+		printf("Decryption test: unexpected err %d\n", err);
+		exit(1);
+	}
+	free(res);
+
+	// 1 too long
+	res = l2->decrypt(hc_enc, hc_enc_len + 1, len, err);
+	if (err != 1002) {
+		printf("Decryption test: unexpected err %d\n", err);
+		exit(1);
+	}
+	free(res);
+
+	// corrupted internal length
+	hc_enc[16] = 99;
+	res = l2->decrypt(hc_enc, hc_enc_len, len, err);
+	if (err != 1003) {
+		printf("Decryption test: unexpected err %d\n", err);
+		exit(1);
+	}
+	free(res);
+
+	delete l2;
+}
+
 int main()
 {
 	// calls srandom(time of day) indirectly
 	arduino_random(0, 2);
 
+	test_encryption();
 	test_1(0);
 	test_1("abracadabra");
 	test_1("");
