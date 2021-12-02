@@ -23,7 +23,7 @@ static uint8_t* memdup(const uint8_t* buffer, size_t len)
 
 static void test_1_packet_received(LoRaL2Packet *pkt)
 {
-	printf("\tReceived len %lu\n", pkt->len);
+	printf("\tReceived len %lu err %d\n", pkt->len, pkt->err);
 	if (pkt->err < test_exp_err_min || pkt->err > test_exp_err_max) {
 		printf("\t\tUnexpected error %d, expected %d..%d\n",
 			pkt->err, test_exp_err_min, test_exp_err_max);
@@ -120,7 +120,7 @@ static void test_1(const char *key)
 		for (size_t i = 0; i < 30; ++i) {
 			recv_buffer[random() % recv_len] = random() % 256;
 		}
-		printf("\tReceiving LDR len %lu\n", recv_len);
+		printf("\tReceiving SDR len %lu\n", recv_len);
 		l2->on_recv(-50, recv_buffer, recv_len);
 
 		// short packet FEC
