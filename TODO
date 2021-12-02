@@ -1,4 +1,2 @@
 Increase code coverage in unit testing
-
-Separate class LoRaL2Packet in its own file
-	Move FEC and crypto code to that class
+Try again to increase message size to 220-230 range
