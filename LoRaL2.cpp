@@ -161,8 +161,6 @@ uint8_t *LoRaL2::append_fec(const uint8_t* packet, size_t len, size_t& new_len)
 {
 	if (len > MSGSIZ_LONG) {
 		len = MSGSIZ_LONG;
-	} else if (len < 0) {
-		len = 0;
 	}
 	new_len = len;
 
