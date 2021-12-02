@@ -43,12 +43,7 @@ LoRaL2::LoRaL2(long int band, int spread, int bandwidth,
 
 	this->status = STATUS_IDLE;
 
-	if (!lora_start(band, spread, bandwidth, POWER, PABOOST, CR4SLSH, this)) {
-		_ok = false;
-		return;
-	}
-
-	_ok = true;
+	_ok = lora_start(band, spread, bandwidth, POWER, PABOOST, CR4SLSH, this);
 }
 
 LoRaL2::~LoRaL2()
@@ -115,10 +110,8 @@ bool LoRaL2::send(const uint8_t *packet, size_t payload_len)
 		return false;
 	}
 
-	if (! lora_begin_packet()) {
-		// can only fail if in tx mode, don't touch anything
-		return false;
-	}
+	// should not happen because of 'status' protection
+	if (! lora_begin_packet()) return false;
 
 	size_t encrypted_len;
 	uint8_t* encrypted_packet = encrypt(packet, payload_len, encrypted_len);
