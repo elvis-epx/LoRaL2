@@ -111,6 +111,10 @@ bool LoRaL2::send(const uint8_t *packet, size_t payload_len)
 		return false;
 	}
 
+	if (payload_len > max_payload()) {
+		return false;
+	}
+
 	if (! lora_begin_packet()) {
 		// can only fail if in tx mode, don't touch anything
 		return false;
@@ -159,9 +163,9 @@ size_t LoRaL2::max_payload() const
 
 uint8_t *LoRaL2::append_fec(const uint8_t* packet, size_t len, size_t& new_len)
 {
-	if (len > MSGSIZ_LONG) {
-		len = MSGSIZ_LONG;
-	}
+	// safety measure, should never happen
+	if (len > MSGSIZ_LONG) len = MSGSIZ_LONG;
+
 	new_len = len;
 
 	uint8_t* rs_unencoded    = (uint8_t*) calloc(MSGSIZ_LONG,                   sizeof(char));
