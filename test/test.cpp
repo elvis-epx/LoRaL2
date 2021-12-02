@@ -51,6 +51,9 @@ void test_1(const char *key)
 			test_1_packet_received);
 	printf("Status %d, Speed in bps: %d\n", !!l2->ok(), l2->speed_bps());
 
+	uint8_t *recv_buffer;
+	size_t recv_len;
+
 	for (size_t len = 0; len <= l2->max_payload() + 1; ++len) {
 		test_payload = (uint8_t*) malloc(len);
 		test_len = len;
@@ -80,9 +83,6 @@ void test_1(const char *key)
 		l2->on_sent();
 
 		// TODO test if it was really encrypted
-
-		uint8_t *recv_buffer;
-		size_t recv_len;
 
 		// reception of perfect packet
 		test_exp_err_min = test_exp_err_max = 0;
@@ -123,14 +123,14 @@ void test_1(const char *key)
 		printf("\tReceiving LDR len %lu\n", recv_len);
 		l2->on_recv(-50, recv_buffer, recv_len);
 
-		// short packet
+		// short packet FEC
 		test_exp_err_min = test_exp_err_max = 999;
 		recv_len = 9;
 		recv_buffer = (uint8_t*) malloc(recv_len);
 		printf("\tReceiving short len %lu\n", recv_len);
 		l2->on_recv(-50, recv_buffer, recv_len);
 
-		// long packet
+		// long packet FEC
 		test_exp_err_min = test_exp_err_max = 999;
 		recv_len = 300;
 		recv_buffer = (uint8_t*) malloc(recv_len);
@@ -141,6 +141,20 @@ void test_1(const char *key)
 		free(lora_test_last_sent);
 		lora_test_last_sent = 0;
 		free(test_payload);
+	}
+
+	// hazing tests, should not go past FEC
+	// FIXME making RS-FEC to abort, check why
+	for (int i = 0; i < 100; ++i) {
+		test_exp_err_min = 1;
+		test_exp_err_max = 2000;
+		recv_len = random() % 300;
+		recv_buffer = (uint8_t*) malloc(recv_len);
+		for (size_t i = 0; i < recv_len; ++i) {
+			recv_buffer[i] = random() % 256;
+		}
+		printf("\tHazing #%d len %lu\n", i, recv_len);
+		l2->on_recv(-50, recv_buffer, recv_len);
 	}
 
 	delete l2;
