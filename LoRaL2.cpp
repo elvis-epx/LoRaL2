@@ -130,7 +130,7 @@ bool LoRaL2::send(const uint8_t *packet, size_t payload_len)
 
 LoRaL2Packet::LoRaL2Packet(uint8_t *packet, size_t len, int rssi, int err)
 {
-	this->packet = (err ? 0 : packet);
+	this->packet = packet;
 	this->len = len;
 	this->rssi = rssi;
 	this->err = err;
