@@ -6,7 +6,9 @@
 #ifndef __RADIO_H
 #define __RADIO_H
 
-#include <inttypes.h>
+#include <cinttypes>
+#include <cstddef>
+
 class LoRaL2;
 
 bool lora_start(long int band, int spread, int bandwidth, int power,
