@@ -24,7 +24,11 @@ public:
 	int err;
 };
 
-typedef void (*recv_callback)(LoRaL2Packet*);
+class LoRaL2Observer {
+public:
+	virtual void recv(LoRaL2Packet*) = 0;
+	virtual ~LoRaL2Observer() {};
+};
 
 class LoRaL2 {
 public:
@@ -32,7 +36,7 @@ public:
 	void operator=(const LoRaL2&) = delete;
 	
 	LoRaL2(long int band, int spread, int bandwidth,
-		const char *key, size_t key_len, recv_callback recv_cb);
+		const char *key, size_t key_len, LoRaL2Observer *);
 	virtual ~LoRaL2();
 	
 	bool send(const uint8_t *packet, size_t payload_len);
@@ -56,7 +60,7 @@ public:
 	int spread;
 	int bandwidth;
 	uint8_t *hkey;
-	recv_callback recv_cb;
+	LoRaL2Observer *observer;
 	int status;
 	bool _ok;
 };

@@ -33,13 +33,14 @@ static const size_t REDUNDANCY_LONG = 20;
 #include "LoRaL2.h"
 
 LoRaL2::LoRaL2(long int band, int spread, int bandwidth,
-		const char *key, size_t key_len, recv_callback recv_cb)
+		const char *key, size_t key_len,
+		LoRaL2Observer *observer)
 {
 	this->band = band;
 	this->spread = spread;
 	this->bandwidth = bandwidth;
 	this->hkey = hashed_key(key, key_len);
-	this->recv_cb = recv_cb;
+	this->observer = observer;
 
 	this->status = STATUS_IDLE;
 
@@ -97,7 +98,7 @@ void LoRaL2::on_recv(int rssi, uint8_t *buffer, size_t tot_len)
 		packet_len = encrypted_len;
 	}
 
-	recv_cb(new LoRaL2Packet(packet, packet_len, rssi, err));
+	observer->recv(new LoRaL2Packet(packet, packet_len, rssi, err));
 }
 
 bool LoRaL2::send(const uint8_t *packet, size_t payload_len)

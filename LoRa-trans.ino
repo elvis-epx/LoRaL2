@@ -15,7 +15,14 @@ char myid[5];
 
 #define HALF_SEND_INTERVAL 5000
 
-void packet_received(LoRaL2Packet *pkt);
+class RecvObserver: public LoRaL2Observer
+{
+  public:
+	virtual void recv(LoRaL2Packet*);
+};
+
+RecvObserver *recv_observer = new RecvObserver();
+
 void oled_show(const char* msg, const char *msg2 = 0);
 
 void setup()
@@ -33,7 +40,7 @@ void setup()
 	// Pass NULL as encryption key for cleartext communication
 	l2 = new LoRaL2(BAND, SPREAD, BWIDTH,
 			ENCRYPTION_KEY, strlen(ENCRYPTION_KEY),
-			packet_received);
+			recv_observer);
 	if (l2->ok()) {
 		Serial.println("Started");
 	} else {
@@ -111,7 +118,7 @@ void handle_received_packet()
 // RX callback
 // Takes the ownership of packet and its contents
 // Do as little as possible here! (E.g. oled_show() may crash)
-void packet_received(LoRaL2Packet *pkt)
+void RecvObserver::recv(LoRaL2Packet* pkt)
 {
 	if (pending_recv) {
 		delete pending_recv;

@@ -21,7 +21,10 @@ static uint8_t* memdup(const uint8_t* buffer, size_t len)
 	return res;
 }
 
-static void test_1_packet_received(LoRaL2Packet *pkt)
+class TestObserver: public LoRaL2Observer
+{
+public:
+virtual void recv(LoRaL2Packet *pkt)
 {
 	printf("\tReceived len %lu err %d\n", pkt->len, pkt->err);
 	if (pkt->err < test_exp_err_min || pkt->err > test_exp_err_max) {
@@ -43,12 +46,15 @@ static void test_1_packet_received(LoRaL2Packet *pkt)
 	}
 	delete pkt;
 }
+};
+
+static TestObserver *observer = 0;
 
 static void test_1(const char *key)
 {
 	LoRaL2* l2 = new LoRaL2(BAND, SPREAD, BWIDTH,
 			key, key ? strlen(key) : 0,
-			test_1_packet_received);
+			observer);
 	printf("Status %d, Speed in bps: %d\n", !!l2->ok(), l2->speed_bps());
 
 	uint8_t *recv_buffer;
@@ -225,8 +231,10 @@ int main()
 	// calls srandom(time of day) indirectly
 	arduino_random(0, 2);
 
+	observer = new TestObserver();
 	test_encryption();
 	test_1(0);
 	test_1("abracadabra");
 	test_1("");
+	delete observer;
 }
