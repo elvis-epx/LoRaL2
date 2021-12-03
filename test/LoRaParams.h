@@ -1,1 +1,1 @@
-../LoRaParams.h
+../LoRa-trans/LoRaParams.h
