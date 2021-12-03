@@ -5,8 +5,8 @@
 
 #include <stdlib.h>
 #include "RS-FEC.h"
-#include "AES.h"
-#include "sha256.h"
+#include "src/AES.h"
+#include "src/sha256.h"
 #include "ArduinoBridge.h"
 #include "Radio.h"
 
