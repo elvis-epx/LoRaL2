@@ -137,6 +137,8 @@ bool lora_begin_packet()
 	return true;
 }
 
+bool lora_emu_call_onsent = true;
+
 void lora_finish_packet(const uint8_t* packet, size_t len)
 {
 	if (lora_test_last_sent) {
@@ -167,6 +169,10 @@ void lora_finish_packet(const uint8_t* packet, size_t len)
 		exit(1);
 	}
 	// printf("fake: Sent packet\n");
+
+	if (lora_emu_call_onsent) {
+		observer->on_sent();
+	}
 }
 
 void lora_emu_rx()
