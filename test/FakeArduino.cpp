@@ -165,6 +165,14 @@ void lora_finish_packet(const uint8_t* packet, size_t len)
 	c[0] = coverage;
 	memcpy(c + 1, packet, len);
 
+#ifdef LORA_EMU_DUMP
+	printf("fake: lora_emu_tx ");
+	for(size_t i = 0; i < (len + 1); ++i) {
+		printf("%d ", c[i]);
+	}
+	printf("\n");
+#endif
+
 	int sent = sendto(sock, c, len + 1, 0, (struct sockaddr *) &addr, sizeof(addr));
 	free(c);
 
@@ -213,6 +221,14 @@ void lora_emu_rx()
 
 	uint8_t* bmsg = (uint8_t*) malloc(len);
 	memcpy(bmsg, msg, len);
+
+#ifdef LORA_EMU_DUMP
+	printf("fake: lora_emu_rx ");
+	for(int i = 0; i < len; ++i) {
+		printf("%d ", bmsg[i]);
+	}
+	printf("\n");
+#endif
 
 	observer->on_recv(-50, bmsg, len);
 }
