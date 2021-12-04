@@ -9,6 +9,7 @@
 extern uint8_t* lora_test_last_sent;
 extern int lora_test_last_sent_len;
 extern bool lora_emu_call_onsent;
+extern bool lora_emu_sim_senderr;
 
 static uint8_t* test_payload;
 static size_t test_len;
@@ -231,8 +232,9 @@ int main()
 {
 	// calls srandom(time of day) indirectly
 	arduino_random(0, 2);
-	// test send() failure
+
 	lora_emu_call_onsent = false;
+	lora_emu_sim_senderr = false;
 
 	observer = new TestObserver();
 	test_encryption();

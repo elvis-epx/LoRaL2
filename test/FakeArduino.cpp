@@ -131,9 +131,13 @@ void lora_receive()
 {
 }
 
+bool lora_emu_sim_senderr = true;
+
 bool lora_begin_packet()
 {
-	// FIXME test failure 
+	if (lora_emu_sim_senderr) {
+		return arduino_random(0, 100) > 0;
+	}
 	return true;
 }
 
