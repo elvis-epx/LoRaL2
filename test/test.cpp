@@ -3,7 +3,6 @@
 #include <cstdio>
 
 #include "LoRaL2.h"
-#include "LoRaParams.h"
 #include "ArduinoBridge.h"
 
 extern uint8_t* lora_test_last_sent;
@@ -51,6 +50,10 @@ virtual void recv(LoRaL2Packet *pkt)
 };
 
 static TestObserver *observer = 0;
+
+#define BAND 915000000
+#define SPREAD 7
+#define BWIDTH 125000
 
 static void test_1(const char *key)
 {

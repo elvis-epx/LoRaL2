@@ -60,16 +60,17 @@ directly or indirectly in the header of each file).
 
 # LoRa parameters
 
-In LoRaParams.h, the main LoRa parameters (frequency, spread and bandwidth)
-can be tweaked. The default parameters deliver 5kbps of speed and have a good
-balance between reliability, range and speed, especially for testing.
+In LoRaL2 constructor, some LoRa parameters (frequency, spread and bandwidth)
+are pased as parameters. The suggested parameters in Lora-trans.ino deliver
+5kbps of speed and have a good balance between reliability, range and speed,
+especially for testing.
 
 If you need really good range, try to reduce bandwidth to 62500 (if your LoRa
 chip supports it) and increase spread to SF9. We have had very good range in
 urban areas with this setup, and reach several km of range in almost-clear sight.
-This is 9db better than the default, at the cost of low speed (0.8kbps). One could
-use 125kHz bandwidth and SF10, but in our experiences the narrower bandwidth did
-better.
+This is 9db better, at the cost of low speed (0.8kbps). Another option is 125kHz
+bandwidth and SF10, but the narrower bandwidth did better in our tests (this may
+vary, depending on each specific hardware).
 
 Be sure to generate very few packets withvery small payloads if you go very low speed.
 An encrypted packet has a minimum of 44 octets, which takes half a second
