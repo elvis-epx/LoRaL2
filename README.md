@@ -1,6 +1,6 @@
 # LoRa-trans - L2 transport improvements for LoRa
 
-This project adds a Level-2 layer over LoRa transport, as well as an
+This project adds a layer over LoRa transport, as well as an
 easy-to-use API. The idea is to make LoRa easier to use in IoT projects.
 
 Check the Arduino sketch which is a complete example of API usage.
@@ -14,15 +14,18 @@ to LoRa packets.
 ## Error correction
 
 LoRa has layer-1 error correction (named CR) as well as layer-1 error
-detection using CRC. Why add FEC in software?
+detection using CRC. Why bother with software FEC?
 
-In our experiments, we found that LoRa packets arrive with errors even under
-the best of circunstances. CR is not enough to prevent this, even if configured
-to maximum redundancy. Due to this, layer-1 CRC discards many almost-perfect
-packets.
+In our experiments, we found that many LoRa packets arrive with errors even under
+the best of circunstances. CR is not enough to prevent this, even maxed out.
+If layer-1 CRC is activated, many almost-perfect packets are discarded. On the
+other hand, LoRa CRC is 16 bit only, and a corrupted packet might still pass
+as good.
 
-CR and CRC use algorithms that are fast in hardware, but software error correction
-can be much more powerful.
+LoRa CR and CRC codes are conceived to be fast in hardware, but codes like
+Reed-Solomon are much more powerful. A strong FEC code increases the
+usable radio range and guarantees the higher layers of the protocol stack
+won't get corrupted packets.
 
 Every packet is trailed by a FEC (Forward Error Code). The code can be
 Reed-Solomon RS(50,10), RS(100,14) or RS(200,20) depending on packet
@@ -38,16 +41,14 @@ shorter packets.
 
 The reference FEC RS implementation is https://github.com/simonyipeter/Arduino-FEC .
 
-Packets are transmitted using LoRa explicit mode, so the packet size is known
-when it reaches the network layer to be parsed. CRC is disabled.
+Packets are transmitted using LoRa explicit mode, so the payload size can be inferred.
+CRC is disabled. CR is set to 5/4, the weakest allowed by LoRa.
 
 ## Encryption
 
-Optional encryption is based on AES256, and happens before the calculation
-of FEC code.
+Optional encryption is based on AES256 cypher.
 
-If encryption is on, maximum payload is 166 octets, due to additional preambles
-(IV, length) and encryption block round-up.
+If encryption is on, maximum payload is 166 octets, due to IV preamble and block round-up.
 
 ## Testing
 
@@ -78,7 +79,7 @@ in 0.8kbps speed.
 The project disables CRC mode, enables explicit mode and uses the lowest
 L1 redundancy possible (5/4). This is hardcoded within Radio.cpp, and should
 be kept as they are. In particular the explicit mode should not be turned off,
-since the code depends on it to function.
+since we depend on it.
 
 # License
 
