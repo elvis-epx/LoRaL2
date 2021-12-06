@@ -3,11 +3,12 @@
 #include <cstdio>
 
 #include "LoRaL2.h"
-#include "LoRaParams.h"
 #include "ArduinoBridge.h"
 
 extern uint8_t* lora_test_last_sent;
 extern int lora_test_last_sent_len;
+extern bool lora_emu_call_onsent;
+extern bool lora_emu_sim_senderr;
 
 static uint8_t* test_payload;
 static size_t test_len;
@@ -49,6 +50,10 @@ virtual void recv(LoRaL2Packet *pkt)
 };
 
 static TestObserver *observer = 0;
+
+#define BAND 915000000
+#define SPREAD 7
+#define BWIDTH 125000
 
 static void test_1(const char *key)
 {
@@ -230,6 +235,9 @@ int main()
 {
 	// calls srandom(time of day) indirectly
 	arduino_random(0, 2);
+
+	lora_emu_call_onsent = false;
+	lora_emu_sim_senderr = false;
 
 	observer = new TestObserver();
 	test_encryption();

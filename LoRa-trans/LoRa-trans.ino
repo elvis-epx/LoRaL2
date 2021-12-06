@@ -6,7 +6,10 @@
 #include "SSD1306.h"
 #include "LoRaL2.h"
 #include "ArduinoBridge.h"
-#include "LoRaParams.h"
+
+#define BAND    916750000
+#define SPREAD  7
+#define BWIDTH  125000
 
 LoRaL2 *l2;
 char myid[5];
