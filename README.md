@@ -28,11 +28,11 @@ usable radio range and guarantees the higher layers of the protocol stack
 won't get corrupted packets.
 
 Every packet is trailed by a FEC (Forward Error Code). The code can be
-Reed-Solomon RS(50,10), RS(100,14) or RS(200,20) depending on packet
-size. This means the maximum payload is 200 octets.
+Reed-Solomon RS(50,10), RS(100,14) or RS(230,20) depending on packet
+size. This means the maximum payload is 230 octets.
 
 Since Reed-Solomon codes demand a fixed-size message, it is calculated as if
-the network packet was padded with nulls (binary zeros) up to 50, 100 or 200
+the network packet was padded with nulls (binary zeros) up to 50, 100 or 230
 octets.
 
 The idea of using several codes is to keep the redundancy and error correction
@@ -48,7 +48,7 @@ CRC is disabled. CR is set to 5/4, the weakest allowed by LoRa.
 
 Optional encryption is based on AES256 cypher.
 
-If encryption is on, maximum payload is 166 octets, due to IV preamble and block round-up.
+If encryption is on, maximum payload is 198 octets, due to IV preamble and block round-up.
 
 ## Testing
 
