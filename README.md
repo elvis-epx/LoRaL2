@@ -16,16 +16,18 @@ to LoRa packets.
 LoRa has layer-1 error correction (named CR) as well as layer-1 error
 detection using CRC. Why bother with software FEC?
 
-In our experiments, we found that many LoRa packets arrive with errors even under
-the best of circunstances. CR is not enough to prevent this, even maxed out.
-If layer-1 CRC is activated, many almost-perfect packets are discarded. On the
-other hand, LoRa CRC is 16 bit only, and a corrupted packet might still pass
-as good.
+In our experiments, we found that many LoRa packets arrive with small errors, even in 
+the best circunstances. CR is not enough to prevent this, even when maxed out (8/4).
+Let alone that CR is a very wasteful error-correction coding, eating up 50% of the
+bandwidth in 8/4 mode.
 
-LoRa CR and CRC codes are conceived to be fast in hardware, but codes like
-Reed-Solomon are much more powerful. A strong FEC code increases the
-usable radio range and guarantees the higher layers of the protocol stack
-won't get corrupted packets.
+Due to this, when layer-1 CRC is activated, many almost-perfect packets are discarded.
+Note that LoRa CRC is 16 bit only, so it is not a strong guarantee against corrupted
+data.
+
+LoRa's CR and CRC codes were probably chosen to be fast in hardware and spend little
+energy, but even the good old Reed-Solomon can do much better. A good FEC code increases the
+usable radio range and guarantees the application layer won't get corrupted data.
 
 Every packet is trailed by a FEC (Forward Error Code). The code can be
 Reed-Solomon RS(50,10), RS(100,14) or RS(230,20) depending on packet
@@ -67,15 +69,18 @@ are pased as parameters. The suggested parameters in Lora-trans.ino deliver
 especially for testing.
 
 If you need really good range, try to reduce bandwidth to 62500 (if your LoRa
-chip supports it) and increase spread to SF9. We have had very good range in
-urban areas with this setup, and reach several km of range in almost-clear sight.
-This is 9db better, at the cost of low speed (0.8kbps). Another option is 125kHz
-bandwidth and SF10, but the narrower bandwidth did better in our tests (this may
-vary, depending on each specific hardware).
+chip supports it) and increase spread to SF9. This is 9dB better than the
+project default.  We have had very good range in urban areas with this setup,
+and effortlessly reach several km of range in almost-clear sight. 
+The downside of longer range is low speed (0.8kbps).
 
-Be sure to generate very few packets withvery small payloads if you go very low speed.
-An encrypted packet has a minimum of 44 octets, which takes half a second
-in 0.8kbps speed.
+Another almost equivalent recipe is 125kHz bandwidth and SF10. In our tests,
+the narrower bandwidth did better, but your mileage may vary depending on
+your hardware and other conditions.
+
+Be sure to generate very few packets, with very small payloads, if you go
+low speed.  An encrypted packet has a minimum of 44 octets, which takes half
+a second in 0.8kbps speed!
 
 The project disables CRC mode, enables explicit mode and uses the lowest
 L1 redundancy possible (5/4). This is hardcoded within Radio.cpp, and should
