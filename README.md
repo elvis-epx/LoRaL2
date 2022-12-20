@@ -1,4 +1,4 @@
-# LoRa-trans - L2 transport improvements for LoRa
+# LoRaL2 - L2 improvements for LoRa
 
 This project adds a layer over LoRa transport, as well as an
 easy-to-use API. The idea is to make LoRa easier to use in IoT projects.
@@ -8,7 +8,7 @@ Check the Arduino sketch which is a complete example of API usage.
 Our target hardware is TTGO-ESP32, so the low-level code and testing is
 tested only on this platform.
 
-LoRa-trans adds FEC (Forward Error Correction) and optional encryption
+LoRaL2 adds FEC (Forward Error Correction) and optional encryption
 to LoRa packets.
 
 ## Error correction
@@ -64,7 +64,7 @@ directly or indirectly in the header of each file).
 # LoRa parameters
 
 In LoRaL2 constructor, some LoRa parameters (frequency, spread and bandwidth)
-are pased as parameters. The suggested parameters in Lora-trans.ino deliver
+are pased as parameters. The suggested parameters in LoraL2.ino deliver
 5kbps of speed and have a good balance between reliability, range and speed,
 especially for testing.
 

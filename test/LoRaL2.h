@@ -1,1 +1,1 @@
-../LoRa-trans/LoRaL2.h
+../LoRaL2/LoRaL2.h

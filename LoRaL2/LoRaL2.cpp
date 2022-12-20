@@ -1,10 +1,10 @@
 /*
- * LoRa-trans (LoRa layer-2) project
+ * LoRaL2 (LoRa layer-2) project
  * Copyright (c) 2021 PU5EPX
  */
 
 #include <stdlib.h>
-#include "RS-FEC.h"
+#include "src/RS-FEC.h"
 #include "src/AES.h"
 #include "src/sha256.h"
 #include "ArduinoBridge.h"

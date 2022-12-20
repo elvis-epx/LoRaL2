@@ -1,5 +1,5 @@
 /*
- * LoRa-trans (LoRa layer-2) project
+ * LoRaL2 (LoRa layer-2) project
  * Copyright (c) 2021 PU5EPX
  */
 
